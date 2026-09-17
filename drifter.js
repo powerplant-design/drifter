@@ -40,6 +40,7 @@
             margin: 0;
             padding: 0;
             overflow: hidden;
+            overflow-x: hidden;
             background-color: #ffffff; /* Start white to blend seamlessly with the website */
             font-family: sans-serif;
         }
@@ -69,6 +70,7 @@
             bottom: 0;
             left: 0;
             width: 100%;
+            max-width: 100vw;
             height: 3rem;
             display: flex;
             justify-content: center;
@@ -76,6 +78,8 @@
             gap: 2rem;
             z-index: 10;
             background-color: var(--red);
+            box-sizing: border-box;
+            overflow: hidden;
         }
         .footer a {
             font-family: Helvetica, sans-serif;
@@ -107,19 +111,21 @@
             color: var(--red);
         }
         
+        @media (max-width: 1024px) {
+            .drive-btn {
+                display: none !important;
+            }
+        }
         @media (max-width: 640px) {
             .footer {
-                gap: 1rem;
-                padding: 0 0.9rem;
+                gap: 0.6rem;
+                padding: 0 0.5rem;
                 height: 3rem;
-                justify-content: flex-start;
+                justify-content: center;
+                flex-wrap: nowrap;
             }
-            .drive-btn {
-                position: static;      /* flow inside the flex bar instead of absolute -> never cropped */
-                right: auto;
-                margin-left: auto;     /* pushed to the right edge */
-                padding: 0.2rem 0.7rem;
-                white-space: nowrap;
+            .footer a {
+                font-size: 0.85rem;
             }
         }`;
     document.head.appendChild(el);
@@ -134,7 +140,8 @@
       // Red banner bar. Hardcoded links are just a fallback — pullBanner() swaps in the real site's.
       var footer = document.createElement('footer'); footer.className = 'footer';
       footer.innerHTML = '<a href="https://www.instagram.com/sidepiece.niseko/" target="_blank" rel="noopener noreferrer">INSTAGRAM</a>'
-                       + '<a href="https://www.facebook.com/p/SIDE-PIECE-61572041270089/" target="_blank" rel="noopener noreferrer">METABOOK</a>';
+                       + '<a href="https://www.facebook.com/p/SIDE-PIECE-61572041270089/" target="_blank" rel="noopener noreferrer">METABOOK</a>'
+                       + '<a href="https://fabradiokk.com" target="_blank" rel="noopener noreferrer">FAB RADIO</a>';
       footer.appendChild(db);
       document.body.appendChild(footer);
     } else {
@@ -576,7 +583,7 @@
           const wrap = document.createElement('div');
           wrap.id = 'wasdWrap';
           wrap.style.cssText = 'position:absolute;right:1.4rem;bottom:4.6rem;width:280px;height:240px;z-index:9;pointer-events:none;user-select:none;opacity:0;transition:opacity 0.25s ease;';
-          if (isMobile) wrap.style.display = 'none';   // no on-screen controls on phones (van auto-drives)
+          if (isMobile || window.innerWidth <= 1024) wrap.style.display = 'none';   // no on-screen controls on phones/tablets (van auto-drives)
           document.body.appendChild(wrap);
           // Isometric arrangement — positions in KEY units (tweak gx/gy to nudge). Keys interlock.
           const defs = [
@@ -658,8 +665,8 @@
         })();
 
         document.getElementById('driveBtn').addEventListener('click', () => {
-            if (isMobile) enterInspect();          // phones: DRIVE opens the showcase / inspect view
-            else startTransitionToDrive();
+            if (isMobile || window.innerWidth <= 1024) return;          // tablets/phones: DRIVE is disabled
+            startTransitionToDrive();
         });
 
         function startTransitionToDrive(opts) {
@@ -1076,6 +1083,7 @@
             + 'padding:0.6rem 2.4rem;font-family:Helvetica,sans-serif;font-weight:bold;font-size:1.5rem;letter-spacing:0.03em;'
             + 'color:#fff;background:#cc323e;border:3px solid #000;border-radius:12px;cursor:pointer;'
             + 'box-shadow:0 5px 0 #000,0 9px 14px rgba(0,0,0,0.45);-webkit-tap-highlight-color:transparent;transition:transform 0.06s ease,box-shadow 0.06s ease;';
+        if (isMobile || window.innerWidth <= 1024) driveGameBtn.style.display = 'none';
         document.body.appendChild(driveGameBtn);
         // chunky key-press feel (right-anchored so it can't be cropped off in portrait)
         const drivePress = () => { driveGameBtn.style.transform = 'translateY(5px)'; driveGameBtn.style.boxShadow = '0 0 0 #000,0 3px 8px rgba(0,0,0,0.45)'; };
@@ -1143,8 +1151,8 @@
             inspectOverlay.style.opacity = '1';                // fades in via CSS transition
             inspectOverlay.style.pointerEvents = 'auto';
             closeBtn.style.display = 'block';
-            if (isMobile) {                                    // show the "Drive" launch button, hide footer DRIVE
-                driveGameBtn.style.display = 'block';
+            if (isMobile || window.innerWidth <= 1024) {                                    // show the "Drive" launch button, hide footer DRIVE
+                driveGameBtn.style.display = 'none';
                 const fb = document.getElementById('driveBtn');
                 fb.style.opacity = '0'; fb.style.pointerEvents = 'none';
             }
@@ -1163,9 +1171,9 @@
             inspectOverlay.style.pointerEvents = 'none';
             closeBtn.style.display = 'none';
             driveGameBtn.style.display = 'none';
-            if (isMobile && !isDriving) {                      // back to the parked page -> restore DRIVE button
+            if ((isMobile || window.innerWidth <= 1024) && !isDriving) {                      // back to the parked page -> restore DRIVE button
                 const fb = document.getElementById('driveBtn');
-                fb.style.opacity = '1'; fb.style.pointerEvents = 'auto';
+                fb.style.opacity = '0'; fb.style.pointerEvents = 'none';
             }
         }
         closeBtn.addEventListener('click', exitInspect);
@@ -1608,7 +1616,7 @@
             isMobile = detectMobile();
             applyCameraZoom();
             const kb = document.getElementById('wasdWrap');
-            if (kb) kb.style.display = isMobile ? 'none' : '';
+            if (kb) kb.style.display = (isMobile || window.innerWidth <= 1024) ? 'none' : '';
             // Re-fit the floor to the new aspect so the site re-lays-out (no zoomed/cropped slice)
             floorPxW = floorWidthPx();
             tileSize = floorPxW * PX2WORLD;
@@ -1634,6 +1642,13 @@
             var db = footer.querySelector('#driveBtn');
             Array.prototype.forEach.call(footer.querySelectorAll('a'), function (a) { a.remove(); });
             Array.prototype.forEach.call(src.querySelectorAll('a'), function (a) { footer.insertBefore(a.cloneNode(true), db); });
+            // Preserve hardcoded links that aren't in the iframe footer
+            var existingHrefs = Array.prototype.map.call(footer.querySelectorAll('a'), function(a){ return a.href; });
+            if (existingHrefs.indexOf('https://fabradiokk.com/') === -1 && existingHrefs.indexOf('https://fabradiokk.com') === -1) {
+              var fab = document.createElement('a');
+              fab.href = 'https://fabradiokk.com'; fab.target = '_blank'; fab.rel = 'noopener noreferrer'; fab.textContent = 'FAB RADIO';
+              footer.insertBefore(fab, db);
+            }
             ok = true;
           }
         } catch (e) {}
